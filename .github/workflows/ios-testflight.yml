@@ -1,0 +1,102 @@
+# AGUNA iOS build to TestFlight, run from this PUBLIC repo.
+#
+# Why this repo exists: on 23 Oct 2026 the private repo's free macOS minutes for
+# October were used up and King's card was refused. King, 23 Oct: "if the public
+# builder repo isnt harmful and will get build to testflight do it".
+# Public repos get GitHub's standard runners free.
+#
+# What is public here: this file and the run logs. What is NOT: the app source
+# (checked out at run time from the private repo Aguna18/aguna-ios-app with the
+# SOURCE_TOKEN secret), the App Store Connect key (ASC_PRIVATE_KEY secret) and the
+# built app (uploaded straight to App Store Connect, never kept as an artifact).
+# Secrets are never given to pull requests from forks, and every job below
+# refuses to run outside the Aguna18 account.
+#
+# Same steps as .github/workflows/ios-testflight.yml in the private repo: gates on
+# Ubuntu, then ops/ios/build.sh on macOS. Uploads to TestFlight only. Never
+# submits to App Review.
+#
+# Fired by a push that changes trigger.json, or by Run workflow.
+
+name: iOS TestFlight
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'trigger.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-testflight
+  cancel-in-progress: false
+
+jobs:
+  gates:
+    if: github.repository_owner == 'Aguna18'
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: Aguna18/aguna-ios-app
+          ref: main
+          token: ${{ secrets.SOURCE_TOKEN }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci || npm install
+      - run: npx playwright install --with-deps chromium
+      - name: All gates
+        run: |
+          set -euo pipefail
+          node tools/probe-regression-registry.mjs
+          node tools/gate-all.mjs
+
+  build:
+    if: github.repository_owner == 'Aguna18'
+    needs: gates
+    runs-on: macos-15
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: Aguna18/aguna-ios-app
+          ref: main
+          token: ${{ secrets.SOURCE_TOKEN }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Build and upload to TestFlight
+        env:
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_PRIVATE_KEY: ${{ secrets.ASC_PRIVATE_KEY }}
+        shell: bash
+        run: |
+          set -o pipefail
+          bash ops/ios/build.sh 2>&1 | tee "$RUNNER_TEMP/build-out.txt"
+      - name: Report back to the private repo
+        if: always()
+        run: |
+          # build.sh reads the KEPT CERTIFICATE lines of ops/ios/last-result.txt on
+          # the next run, so the result goes back to the private repo as before.
+          git checkout -- . && git clean -fdq -e node_modules
+          {
+            echo "run     $GITHUB_RUN_ID (Aguna18/aguna-ios-builder)"
+            echo "commit  $(git rev-parse HEAD)"
+            echo "result  ${{ job.status }}"
+            echo "========================================"
+            grep -E "error:|ARCHIVE|EXPORT|UPLOADED|WARNING|version .* build|KEPT CERTIFICATE|REVOKED" "$RUNNER_TEMP/build-out.txt" 2>/dev/null | head -40
+            echo "---- last lines ----"
+            tail -60 "$RUNNER_TEMP/build-out.txt" 2>/dev/null || echo "no output"
+          } > ops/ios/last-result.txt
+          git config user.name "aguna-ios-bot"
+          git config user.email "support@aguna.app"
+          git add ops/ios/last-result.txt
+          git commit -m "ios: result for builder run $GITHUB_RUN_ID" || exit 0
+          git pull --rebase origin main && git push origin HEAD:main
