@@ -39,10 +39,17 @@ jobs:
     env:
       ANDROID_VERSION_NAME: "1.0.55"
     steps:
+      # Which branch of the app to build: android-trigger.json "ref" (default main).
+      - uses: actions/checkout@v4
+        with:
+          path: builder
+      - id: src
+        run: echo "ref=$(python3 -c "import json;print(json.load(open('builder/android-trigger.json')).get('ref','main'))")" >> "$GITHUB_OUTPUT"
+      - run: rm -rf builder
       - uses: actions/checkout@v4
         with:
           repository: Aguna18/aguna-ios-app
-          ref: main
+          ref: ${{ steps.src.outputs.ref }}
           token: ${{ secrets.SOURCE_TOKEN }}
           persist-credentials: false
 
