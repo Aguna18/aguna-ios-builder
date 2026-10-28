@@ -102,6 +102,11 @@ jobs:
           python3 tools/android/make-icons.py android
           test ! -f android/app/src/main/res/drawable-v24/ic_launcher_foreground.xml
 
+      # Reminders at their exact minute (King, 28 Oct 2026). Same step as the
+      # private repo's android-release.yml.
+      - name: Reminder permissions
+        run: python3 tools/android/add-permissions.py android
+
       # @capgo/capacitor-health declares 44 Health Connect permissions (every READ and
       # WRITE it supports). Play makes us justify each one in the Health apps
       # declaration, and the app only READS four types (public/js/health.js:
