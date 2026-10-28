@@ -1,0 +1,172 @@
+# AGUNA Android release AAB for Google Play, run from this PUBLIC repo.
+#
+# Why: on 28 Oct 2026 the private repo's free Actions minutes for October were
+# used up ("The job was not started because recent account payments have failed
+# or your spending limit needs to be increased") and King's card is refused by
+# GitHub (King, 28 Oct: "The card isn't accepted on GitHub"). Public repos get
+# GitHub's standard runners free, as ios-testflight.yml here already does.
+#
+# Same steps as .github/workflows/android-release.yml in the private repo. The app
+# source is checked out at run time with SOURCE_TOKEN; the upload key is unlocked
+# with the ANDROID_SIGNING_PASS secret (passwords masked in the log). The signed
+# AAB is NEVER kept as a public artifact: it is pushed to the private repo's
+# android-aab branch, where King downloads it for Play. Secrets are never given
+# to forks, and the job refuses to run outside the Aguna18 account.
+#
+# Fired by a push that changes android-trigger.json, or by Run workflow.
+
+name: Android Play AAB
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'android-trigger.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-play
+  cancel-in-progress: false
+
+jobs:
+  aab:
+    if: github.repository_owner == 'Aguna18'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      ANDROID_VERSION_NAME: "1.0.55"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: Aguna18/aguna-ios-app
+          ref: main
+          token: ${{ secrets.SOURCE_TOKEN }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Unlock the upload key
+        env:
+          ANDROID_SIGNING_PASS: ${{ secrets.ANDROID_SIGNING_PASS }}
+        run: |
+          set -e
+          if [ -z "$ANDROID_SIGNING_PASS" ]; then
+            echo "::error::Repo secret ANDROID_SIGNING_PASS is missing. Add it at Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/signing"
+          openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 \
+            -in ops/android/signing.tar.enc -pass env:ANDROID_SIGNING_PASS \
+            | tar -x -C "$RUNNER_TEMP/signing"
+          set -a; . "$RUNNER_TEMP/signing/signing.env"; set +a
+          echo "::add-mask::$KEYSTORE_PASSWORD"
+          echo "::add-mask::$KEY_PASSWORD"
+          {
+            echo "CM_KEYSTORE_PATH=$RUNNER_TEMP/signing/upload.jks"
+            echo "CM_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD"
+            echo "CM_KEY_ALIAS=$KEY_ALIAS"
+            echo "CM_KEY_PASSWORD=$KEY_PASSWORD"
+          } >> "$GITHUB_ENV"
+
+      - name: Install npm dependencies
+        run: npm ci || npm install
+
+      - name: Add the Android platform
+        run: |
+          set -e
+          CAP_VERSION=$(node -p "require('@capacitor/core/package.json').version")
+          npm install --no-save "@capacitor/android@$CAP_VERSION"
+          npx cap add android
+          sed -i 's/minSdkVersion = 24/minSdkVersion = 26/' android/variables.gradle
+          grep -q "minSdkVersion = 26" android/variables.gradle
+          cp google-services.json android/app/google-services.json
+          npx cap sync android
+
+      # King, 28 Oct 2026: "even the old TestFlight app icon wtf". cap add android
+      # ships Capacitor's blue X icon; this writes the shipped AGUNA icon instead
+      # (tools/android/make-icons.py, held by tools/probe-android-icon.mjs).
+      - name: AGUNA launcher icon
+        run: |
+          set -e
+          python3 -m pip install --quiet pillow
+          python3 tools/android/make-icons.py android
+          test ! -f android/app/src/main/res/drawable-v24/ic_launcher_foreground.xml
+
+      # @capgo/capacitor-health declares 44 Health Connect permissions (every READ and
+      # WRITE it supports). Play makes us justify each one in the Health apps
+      # declaration, and the app only READS four types (public/js/health.js:
+      # steps, weight, sleep, height) and writes none. requestAuthorization also asks
+      # for workouts and distance, but nothing reads them, so they are stripped too
+      # (Health Connect leaves out an asked-for permission the manifest lacks).
+      # Declaring data we never touch is a rejection.
+      # So every other health permission is stripped from the merged manifest here.
+      # tools/probe-android-health-permissions.mjs keeps KEEP in step with health.js.
+      - name: Keep only the Health Connect permissions the app reads
+        run: |
+          set -e
+          M=android/app/src/main/AndroidManifest.xml
+          KEEP="READ_STEPS READ_WEIGHT READ_SLEEP READ_HEIGHT"
+          ALL=$(grep -ho 'android.permission.health.[A-Z_0-9]*' node_modules/@capgo/capacitor-health/android/src/main/AndroidManifest.xml | sort -u)
+          grep -q 'xmlns:tools' "$M" || sed -i 's#<manifest #<manifest xmlns:tools="http://schemas.android.com/tools" #' "$M"
+          LINES=""
+          for p in $ALL; do
+            case " $KEEP " in *" ${p##*.} "*) ;; *) LINES="$LINES    <uses-permission android:name=\"$p\" tools:node=\"remove\" />\n";; esac
+          done
+          sed -i "s#</manifest>#${LINES}</manifest>#" "$M"
+          echo "Removing $(printf "$LINES" | grep -c 'tools:node')"
+
+      - name: Version and signing
+        run: |
+          set -e
+          G=android/app/build.gradle
+          # 2100+ keeps every builder-repo build above the private repo ones (2000+N).
+          VC=$((2100 + ${GITHUB_RUN_NUMBER}))
+          sed -i "s/versionCode [0-9]*/versionCode $VC/; s/versionName \"[^\"]*\"/versionName \"$ANDROID_VERSION_NAME\"/" $G
+          sed -i 's/^android {/android {\n    signingConfigs {\n        release {\n            storeFile file(System.getenv("CM_KEYSTORE_PATH"))\n            storePassword System.getenv("CM_KEYSTORE_PASSWORD")\n            keyAlias System.getenv("CM_KEY_ALIAS")\n            keyPassword System.getenv("CM_KEY_PASSWORD")\n        }\n    }/' $G
+          sed -i '/buildTypes {/,/release {/ s/release {/release {\n            signingConfig signingConfigs.release/' $G
+          grep -q "signingConfig signingConfigs.release" $G
+          echo "versionCode $VC, versionName $ANDROID_VERSION_NAME"
+
+      - name: Build the release AAB
+        run: |
+          cd android
+          chmod +x gradlew
+          ./gradlew bundleRelease
+
+      - name: Check the merged manifest asks for four health permissions, no more
+        run: |
+          set -e
+          MM=$(find android/app/build/intermediates -path '*merged_manifest*' -name AndroidManifest.xml | grep -i release | head -1)
+          echo "merged manifest: $MM"
+          grep -o 'android.permission.health.[A-Z_0-9]*' "$MM" | sort -u | tee /tmp/health-perms.txt
+          N=$(wc -l < /tmp/health-perms.txt)
+          if [ "$N" -ne 4 ]; then echo "::error::Expected 4 health permissions in the release manifest, found $N"; exit 1; fi
+
+      - name: Deliver the AAB to the private repo (android-aab branch), never public
+        env:
+          SOURCE_TOKEN: ${{ secrets.SOURCE_TOKEN }}
+        run: |
+          set -e
+          AAB=$(ls android/app/build/outputs/bundle/release/*.aab | head -1)
+          SHA=$(git rev-parse --short HEAD)
+          VC=$((2100 + ${GITHUB_RUN_NUMBER}))
+          OUT="$RUNNER_TEMP/aab"
+          URL="https://x-access-token:${SOURCE_TOKEN}@github.com/Aguna18/aguna-ios-app.git"
+          if git clone -q --depth 1 -b android-aab "$URL" "$OUT" 2>/dev/null; then cd "$OUT"; else mkdir -p "$OUT"; cd "$OUT"; git init -q; git checkout -q -b android-aab; fi
+          NAME="aguna-${ANDROID_VERSION_NAME}-${VC}.aab"
+          cp "$GITHUB_WORKSPACE/$AAB" "$NAME"
+          printf 'versionName %s\nversionCode %s\nsource main %s\nbuilder run %s\n' "$ANDROID_VERSION_NAME" "$VC" "$SHA" "$GITHUB_RUN_ID" > LATEST.txt
+          git -c user.name="AGUNA builder" -c user.email="support@aguna.app" add . 
+          git -c user.name="AGUNA builder" -c user.email="support@aguna.app" commit -q -m "AAB ${ANDROID_VERSION_NAME} (${VC}) from main ${SHA}"
+          git push -q "$URL" android-aab
+          echo "Pushed $NAME to Aguna18/aguna-ios-app branch android-aab"
