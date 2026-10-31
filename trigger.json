@@ -1,4 +1,4 @@
 {
-  "why": "1.0.56 for TestFlight only: rating ask on the first Home visit (3e88ec5), Invite a friend (a37ab18), milestone banner (988aa41), the whole app in 32 languages plus 4 regional variants (fd96f38). King, 31 Oct: 'dont submit until weve cleared everything'.",
-  "requested": "2026-10-31T15:10Z"
+  "why": "1.0.56 second TestFlight build with the checkout fixes (app main c89dc2e: plans never stuck, a refused purchase is never a sale). TestFlight only. King, 31 Oct: 'dont submit until weve cleared everything'.",
+  "requested": "2026-10-31T15:40Z"
 }
