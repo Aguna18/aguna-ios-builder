@@ -1,4 +1,4 @@
 {
-  "why": "1.0.56 second TestFlight build with the checkout fixes (app main c89dc2e: plans never stuck, a refused purchase is never a sale). TestFlight only. King, 31 Oct: 'dont submit until weve cleared everything'.",
-  "requested": "2026-10-31T15:40Z"
+  "why": "1.0.56 third TestFlight build: rest days can be changed after onboarding, on top of the checkout fixes (app main d0d5169). TestFlight only. King, 31 Oct: 'dont submit until weve cleared everything'.",
+  "requested": "2026-10-31T16:05Z"
 }
