@@ -1,4 +1,4 @@
 {
-  "why": "1.0.56 #5 for TestFlight only (app main a257a69): the invite share text names only the phone's own store (App Store 2.3.10), 218 gates passed. TestFlight only, never submitted.",
-  "requested": "2026-11-01T05:00Z"
+  "why": "2.0.0 #1 for TestFlight only (app main d5efd47): exercise audit (originals keep old art, Hack Squat sled, each body sees only its own pictures, white leftovers cleaned), version 2.0.0 and the Profile footer, signing slot fix f247a28; 222 gates passed. TestFlight only, never submitted.",
+  "requested": "2026-11-01T11:47Z"
 }
