@@ -35,7 +35,7 @@ jobs:
   aab:
     if: github.repository_owner == 'Aguna18'
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     env:
       ANDROID_VERSION_NAME: "1.0.55"
     steps:
