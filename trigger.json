@@ -1,4 +1,4 @@
 {
-  "why": "1.0.56 third TestFlight build: rest days can be changed after onboarding, on top of the checkout fixes (app main d0d5169). TestFlight only. King, 31 Oct: 'dont submit until weve cleared everything'.",
-  "requested": "2026-10-31T16:05Z"
+  "why": "1.0.56 full release for TestFlight (app main 8ad3f25, combined fixes, 218 gates passed). TestFlight only. King, 31 Oct: 'dont submit until weve cleared everything'.",
+  "requested": "2026-11-01T02:00Z"
 }
