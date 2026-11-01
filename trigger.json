@@ -1,4 +1,4 @@
 {
-  "why": "2.0.0 #2 for TestFlight only (app main bedb3f3): Milestones v2 (12 workout counts, 7/14/30 day streaks, PR banner, a notification for each, local lines for 7 countries, Share button, milestone-day badge on share cards and stickers); 224 gates passed. TestFlight only, never submitted.",
-  "requested": "2026-11-01T14:45Z"
+  "why": "2.0.0 #3 for TestFlight only (app main d8905a7): thank-you card after a new subscription (once ever on Home, the user's coach, Pidgin line for NG, never with the rating sheet) on top of Milestones v2; 225 gates passed. TestFlight only, never submitted.",
+  "requested": "2026-11-01T15:45Z"
 }
