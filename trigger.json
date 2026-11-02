@@ -1,4 +1,4 @@
 {
-  "why": "2.0.0 #4 for TestFlight, then App Store resubmission on King's yes (1 Nov 22:31): app main 5f208ca = RevenueCat webhook, How did you hear about AGUNA?, day-2 comeback reminder, AppsFlyer id to RevenueCat, name screen last with Skip; 231 gates passed.",
-  "requested": "2026-11-02T00:20Z"
+  "why": "2.0.1 for TestFlight (app main 745f6cd): fewer onboarding screens before the paywall, 7 questions then the plan; the rest asked after sign-in. Full gates passed.",
+  "requested": "2026-11-02T07:11Z"
 }
