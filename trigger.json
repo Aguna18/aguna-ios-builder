@@ -1,4 +1,4 @@
 {
-  "why": "2.0.1 for TestFlight (app main 745f6cd): fewer onboarding screens before the paywall, 7 questions then the plan; the rest asked after sign-in. Full gates passed.",
-  "requested": "2026-11-02T07:11Z"
+  "why": "2.0.3 #1 for TestFlight only: workout list reads every page (Progress fix), onboarding button always on screen, open iPhone Duo wide layout. App main 3911501 app files; main repo run #30 was cancelled at its 40 min gates limit.",
+  "requested": "2026-11-13T13:50Z"
 }
