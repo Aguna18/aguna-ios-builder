@@ -35,31 +35,12 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  gates:
-    if: github.repository_owner == 'Aguna18'
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          repository: Aguna18/aguna-ios-app
-          ref: main
-          token: ${{ secrets.SOURCE_TOKEN }}
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-      - run: npm ci || npm install
-      - run: npx playwright install --with-deps chromium
-      - name: All gates
-        run: |
-          set -euo pipefail
-          node tools/probe-regression-registry.mjs
-          node tools/gate-all.mjs
-
+  # NO GATES JOB HERE (King, 13 Nov 2026: "whats the point of rerunning 240 checks").
+  # Every gate already runs, and must pass, before anything is pushed to main
+  # (CLAUDE.md section 4), so running the same 240 again here only added over an
+  # hour to every build. This workflow builds what is on main and uploads it.
   build:
     if: github.repository_owner == 'Aguna18'
-    needs: gates
     runs-on: macos-15
     timeout-minutes: 75
     steps:
