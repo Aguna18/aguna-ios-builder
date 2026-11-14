@@ -1,4 +1,4 @@
 {
-  "why": "2.0.3 #4 for TestFlight only: the plate screen at the end of onboarding fits above the button (colours and name field no longer need a swipe). On top of build 553.",
-  "requested": "2026-11-13T20:32Z"
+  "why": "2.0.4 #1 for TestFlight only (app main 11dbe57, all gates passed there): reminders for an install that quits with no account, real App Store reviews on the plan card and after What's new, the purchase record fix, the under-18 line and three lines on the paywall, the Home line after days without a workout, the no-leg-day note. King, 14 Nov: 'proceed with everything'. Not submitted to App Review.",
+  "requested": "2026-11-14T21:08Z"
 }
