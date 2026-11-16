@@ -1,4 +1,4 @@
 {
-  "why": "2.0.4 #1 for TestFlight only (app main 11dbe57, all gates passed there): reminders for an install that quits with no account, real App Store reviews on the plan card and after What's new, the purchase record fix, the under-18 line and three lines on the paywall, the Home line after days without a workout, the no-leg-day note. King, 14 Nov: 'proceed with everything'. Not submitted to App Review.",
-  "requested": "2026-11-14T21:08Z"
+  "why": "2.0.5 #1 for TestFlight only (app main bf6208c, all gates passed there): the paid-before-sign-in reminder cancel finishes before the page leaves, Apple's sign-in sheet opens by itself after payment, Home no longer counts the plan's rest days as days off. 2.0.4 is READY_FOR_SALE. Not submitted to App Review.",
+  "requested": "2026-11-16T10:19Z"
 }
