@@ -1,4 +1,4 @@
 {
-  "why": "2.0.5 #2 for TestFlight only (app main 7b8cf90, all gates passed there): the paid-before-sign-in reminder cancel finishes before the page leaves, Apple's sign-in sheet opens by itself after payment, Home no longer counts the plan's rest days as days off, and no blue band at the top or bottom of the sign-in page, paywall or interview (King, 16 Nov, on build 556). 2.0.4 is READY_FOR_SALE. Not submitted to App Review.",
-  "requested": "2026-11-16T13:07Z"
+  "why": "2.0.6 #1 for TestFlight (app main bb5e2c2, 248 gates passed there, 0 failed): the free workout tap no longer lands on a locked tab and bounces to the paywall, the free first workout is shown with an arrow at the start buttons, locked tabs hold on the Workout page with a line and See plans, the free route's sign-in line says what it opens, the Workout and session pages are on the trail (King, 18 Nov). 2.0.5 is live on the App Store (iTunes lookup, released 2026-11-16T23:06Z). Standing approval, King, 2026-10-02: \"I approve you to start Codemagic builds yourself: app 69fcb83732bd47bbee5e7029, workflow ios-release, branch main, uploading to TestFlight only. This is a standing approval for every app fix from now on. You still need my permission per build before submitting to App Review.\"",
+  "requested": "2026-11-18T21:46Z"
 }
