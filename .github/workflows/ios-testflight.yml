@@ -39,9 +39,32 @@ jobs:
   # Every gate already runs, and must pass, before anything is pushed to main
   # (CLAUDE.md section 4), so running the same 240 again here only added over an
   # hour to every build. This workflow builds what is on main and uploads it.
+  # WHICH MAC BUILDS IT. Apple, 18 Nov 2026, on build 558 (ITMS-90725): "This app
+  # was built with the iOS 26.2 SDK. Starting April 2027, iOS and iPadOS apps must
+  # be built with the iOS 27 SDK or later". GitHub's image with Xcode 27 is the
+  # label xcode-27 (read off actions/runner-images 19 Nov 2026: Xcode 27.2, iOS
+  # 27.2 and watchOS 27.2 SDKs). trigger.json may name the runner ("runner":
+  # "xcode-27"); with no name the build stays on macos-15, so a new SDK is never
+  # picked up by accident on an urgent fix. Once a build made on xcode-27 has been
+  # tested on TestFlight, change the default below to xcode-27.
+  pick:
+    if: github.repository_owner == 'Aguna18'
+    runs-on: ubuntu-latest
+    outputs:
+      runner: ${{ steps.r.outputs.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: r
+        shell: bash
+        run: |
+          R=$(python3 -c "import json;print(json.load(open('trigger.json')).get('runner','macos-15'))" 2>/dev/null || echo macos-15)
+          case "$R" in macos-15|macos-26|xcode-27) ;; *) R=macos-15 ;; esac
+          echo "runner=$R" >> "$GITHUB_OUTPUT"
+          echo "Building on $R"
   build:
     if: github.repository_owner == 'Aguna18'
-    runs-on: macos-15
+    needs: pick
+    runs-on: ${{ needs.pick.outputs.runner }}
     timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
