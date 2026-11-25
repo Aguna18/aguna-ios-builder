@@ -43,10 +43,10 @@ jobs:
   # was built with the iOS 26.2 SDK. Starting April 2027, iOS and iPadOS apps must
   # be built with the iOS 27 SDK or later". GitHub's image with Xcode 27 is the
   # label xcode-27 (read off actions/runner-images 19 Nov 2026: Xcode 27.2, iOS
-  # 27.2 and watchOS 27.2 SDKs). trigger.json may name the runner ("runner":
-  # "xcode-27"); with no name the build stays on macos-15, so a new SDK is never
-  # picked up by accident on an urgent fix. Once a build made on xcode-27 has been
-  # tested on TestFlight, change the default below to xcode-27.
+  # 27.2 and watchOS 27.2 SDKs). EVERY BUILD RUNS ON xcode-27 since 25 Nov 2026
+  # (King: "didnt we say from the next build itll be the xcode27"; 2.0.7 #1 was
+  # built on macos-15 by mistake). trigger.json may name macos-15 only as a
+  # fallback if an xcode-27 run fails.
   pick:
     if: github.repository_owner == 'Aguna18'
     runs-on: ubuntu-latest
@@ -57,8 +57,8 @@ jobs:
       - id: r
         shell: bash
         run: |
-          R=$(python3 -c "import json;print(json.load(open('trigger.json')).get('runner','macos-15'))" 2>/dev/null || echo macos-15)
-          case "$R" in macos-15|macos-26|xcode-27) ;; *) R=macos-15 ;; esac
+          R=$(python3 -c "import json;print(json.load(open('trigger.json')).get('runner','xcode-27'))" 2>/dev/null || echo xcode-27)
+          case "$R" in macos-15|macos-26|xcode-27) ;; *) R=xcode-27 ;; esac
           echo "runner=$R" >> "$GITHUB_OUTPUT"
           echo "Building on $R"
   build:
